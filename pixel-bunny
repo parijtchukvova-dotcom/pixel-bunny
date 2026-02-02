@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Pixel Bunny</title>
+<style>
+body{margin:0;overflow:hidden;background:#6ec6ff;font-family:monospace}
+canvas{display:block}
+#ui{position:fixed;bottom:10px;left:0;right:0;display:flex;justify-content:space-around;z-index:5}
+.btn{width:70px;height:70px;border-radius:50%;background:#0008;color:white;
+display:flex;align-items:center;justify-content:center;font-size:30px}
+#hud{position:fixed;top:5px;left:5px;background:#fff9;padding:6px;border-radius:6px}
+</style>
+</head>
+<body>
+
+<div id="hud"></div>
+<canvas id="c"></canvas>
+
+<div id="ui">
+<div class="btn" id="l">◀</div>
+<div class="btn" id="j">▲</div>
+<div class="btn" id="r">▶</div>
+</div>
+
+<script>
+const c=document.getElementById("c"),x=c.getContext("2d");
+c.width=innerWidth;c.height=innerHeight;
+
+const g=0.7;
+const k={l:0,r:0,j:0};
+const cam={x:0};
+
+let score=0,lives=3;
+
+const player={
+ x:120,y:c.height-140,w:22,h:32,dx:0,dy:0,ground:false,anim:0
+};
+
+const world={
+ platforms:[
+  {x:0,y:c.height-40,w:6000,h:40},
+  {x:400,y:c.height-150,w:140,h:16},
+  {x:700,y:c.height-240,w:140,h:16},
+  {x:1100,y:c.height-180,w:140,h:16},
+  {x:1500,y:c.height-260,w:160,h:16}
+ ],
+ coins:[
+  {x:430,y:c.height-170,t:1},
+  {x:730,y:c.height-260,t:1},
+  {x:1130,y:c.height-200,t:1},
+  {x:1530,y:c.height-280,t:1}
+ ]
+};
+
+function drawBunny(px,py,run){
+ x.fillStyle="#ddd";
+ x.fillRect(px,py,18,24);
+ x.fillRect(px+2,py-14,14,14);
+ x.fillRect(px+3,py-28,4,14);
+ x.fillRect(px+11,py-28,4,14);
+ x.fillStyle="black";
+ x.fillRect(px+6,py-8,2,2);
+ x.fillRect(px+10,py-8,2,2);
+}
+
+function loop(){
+ x.clearRect(0,0,c.width,c.height);
+ cam.x = player.x - c.width/2 + 150;
+
+ x.fillStyle="#9be7ff";
+ x.fillRect(0,0,c.width,c.height);
+
+ x.fillStyle="#5b3a1a";
+ world.platforms.forEach(p=>{
+  x.fillRect(p.x-cam.x,p.y,p.w,p.h);
+ });
+
+ world.coins.forEach(e=>{
+  if(e.t){
+   x.fillStyle="gold";
+   x.beginPath();
+   x.arc(e.x-cam.x,e.y,6,0,Math.PI*2);
+   x.fill();
+   if(player.x<e.x+6 && player.x+player.w>e.x-6 &&
+      player.y<e.y+6 && player.y+player.h>e.y-6){
+      e.t=0; score++;
+   }
+  }
+ });
+
+ if(k.l)player.dx=-4;
+ else if(k.r)player.dx=4;
+ else player.dx=0;
+
+ if(k.j && player.ground){
+  player.dy=-13;
+  player.ground=false;
+ }
+
+ player.dy+=g;
+ player.x+=player.dx;
+ player.y+=player.dy;
+
+ player.ground=false;
+ world.platforms.forEach(p=>{
+  if(player.x+player.w>p.x && player.x<p.x+p.w &&
+     player.y+player.h>p.y && player.y+player.h<p.y+20){
+     player.y=p.y-player.h;
+     player.dy=0;
+     player.ground=true;
+  }
+ });
+
+ drawBunny(player.x-cam.x,player.y,player.dx!=0);
+ hud.innerHTML=`🐰 Lives: ${lives} | 🪙 Coins: ${score}`;
+
+ requestAnimationFrame(loop);
+}
+
+l.ontouchstart=()=>k.l=1; l.ontouchend=()=>k.l=0;
+r.ontouchstart=()=>k.r=1; r.ontouchend=()=>k.r=0;
+j.ontouchstart=()=>k.j=1; j.ontouchend=()=>k.j=0;
+
+loop();
+</script>
+</body>
+</html>
